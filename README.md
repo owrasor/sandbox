@@ -18,12 +18,12 @@ cp .env.example .env
 
 Edita `.env` e define pelo menos:
 
-| Variável | Descrição |
-|----------|-----------|
+| Variável               | Descrição                                                                                 |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
 | `USER_ID` / `GROUP_ID` | Normalmente `id -u` e `id -g` no Linux, para ficheiros no bind mount terem o dono correto |
-| `DOTFILES_HOST` | Caminho **absoluto** ao clone dos dotfiles |
-| `SSH_DIR` | Caminho **absoluto** à pasta `.ssh` do host (montagem só leitura) |
-| `WORKSPACE_HOST` | Diretório de trabalho no host (por defeito `./workspace`) |
+| `DOTFILES_HOST`        | Caminho **absoluto** ao clone dos dotfiles                                                |
+| `SSH_DIR`              | Caminho **absoluto** à pasta `.ssh` do host (montagem só leitura)                         |
+| `WORKSPACE_HOST`       | Diretório de trabalho no host (por defeito `./workspace`)                                 |
 
 Constrói e entra no contentor de desenvolvimento:
 
@@ -36,11 +36,11 @@ Dentro do contentor: utilizador `dev`, shell de login **zsh**, diretório de tra
 
 ## Serviços do Compose
 
-| Serviço | Função |
-|---------|--------|
-| **dev** | Imagem customizada (`docker/Dockerfile`): Ubuntu 24.04, zsh, tmux, Neovim, ferramentas de build; portas publicadas por defeito `3000`, `8080`, `5173` |
+| Serviço   | Função                                                                                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **dev**   | Imagem customizada (`docker/Dockerfile`): Ubuntu 24.04, zsh, tmux, Neovim, ferramentas de build; portas publicadas por defeito `3000`, `8080`, `5173`            |
 | **angie** | [Angie](https://angie.software/) `1.11.4` como proxy reverso; TLS com certificados em `docker/angie/certs/` (ver documentação em `docker/angie/certs/README.md`) |
-| **ngrok** | Perfil Compose `public`: túnel HTTP até `NGROK_TUNNEL_TARGET` (por defeito `dev:3000`) |
+| **ngrok** | Perfil Compose `public`: túnel HTTP até `NGROK_TUNNEL_TARGET` (por defeito `dev:3000`)                                                                           |
 
 Subir desenvolvimento e proxy local:
 
@@ -80,4 +80,4 @@ Novos virtual hosts: ficheiros em `docker/angie/sites/*.conf` — ver [docker/an
 
 ## Segurança (nota breve)
 
-O contentor monta o **workspace**, os **dotfiles** e lê **`.ssh`** do host. Não executes software não confiável com estes mounts ativos; o token do ngrok não deve ser commitado (mantém-o só no `.env`, que não entra no Git).
+O contentor monta o **workspace**, os **dotfiles** e lê **`.ssh`** do host. Não executes software não confiável com estes mounts ativos; o token do ngrok não deve ser commitado (mantê-lo só no `.env`, que não entra no Git).
