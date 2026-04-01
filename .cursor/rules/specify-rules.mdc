@@ -1,0 +1,35 @@
+---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# development_enviroment Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-04-01
+
+## Active Technologies
+
+- Configuração declarativa (Angie/Nginx-style); Docker Compose YAML; shell para validação/manual QA. + Imagem **Angie** (`docker.angie.software/angie`, tag fixa recomendada após `docker pull`/release notes), Docker Compose v2, opcionalmente **mkcert** no host. (001-angie-proxy-test)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+# Add commands for Configuração declarativa (Angie/Nginx-style); Docker Compose YAML; shell para validação/manual QA.
+
+## Code Style
+
+Configuração declarativa (Angie/Nginx-style); Docker Compose YAML; shell para validação/manual QA.: Follow standard conventions
+
+## Recent Changes
+
+- 001-angie-proxy-test: Added Configuração declarativa (Angie/Nginx-style); Docker Compose YAML; shell para validação/manual QA. + Imagem **Angie** (`docker.angie.software/angie`, tag fixa recomendada após `docker pull`/release notes), Docker Compose v2, opcionalmente **mkcert** no host.
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

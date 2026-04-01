@@ -1,0 +1,129 @@
+# Sandbox Docker para desenvolvimento
+
+Ambiente de desenvolvimento em contentor: código e dotfiles no host via bind mount, ferramentas base isoladas (Ubuntu 24.04), **zsh**, **tmux**, **Neovim**, exposição **LAN** por portas e túnel **opcional** com **ngrok**.
+
+## Pré-requisitos
+
+- Docker e Docker Compose v2
+- Clone local do repositório [owrasor/dotfiles](https://github.com/owrasor/dotfiles) (caminho usado em `DOTFILES_HOST`)
+- Ficheiro `.env` na raiz do repo (a partir de `.env.example`)
+
+## Configuração rápida
+
+```bash
+cp .env.example .env
+```
+
+Editar `.env`:
+
+- `USER_ID` / `GROUP_ID`: normalmente `id -u` e `id -g` no host.
+- `DOTFILES_HOST`: caminho absoluto do clone dos dotfiles.
+- `SSH_DIR`: normalmente `$HOME/.ssh` no host. No ficheiro `.env` usa-se o caminho **absoluto** (Compose não expande `~`).
+- `WORKSPACE_HOST`: por defeito `./workspace` (pasta neste repositório).
+
+Permissões SSH no host: diretório `~/.ssh` com modo `700`, chaves privadas `600`.
+
+O entrypoint **não** faz `chown` recursivo sobre `workspace` nem `dotfiles` (evita alterar o dono dos ficheiros no host e falhas com `.ssh` montado só de leitura). Mantém `USER_ID`/`GROUP_ID` iguais ao teu utilizador no host para o bind mount do workspace ter donos coerentes.
+
+## Construir e entrar
+
+```bash
+docker compose build
+docker compose run --rm dev
+```
+
+Dentro do contentor o utilizador é `dev`, shell de login **zsh**, diretório inicial do compose: `/home/dev/workspace`.
+
+### Aplicar dotfiles
+
+O clone dos dotfiles está em `/home/dev/dotfiles`. Segue o procedimento do próprio repositório (por exemplo GNU Stow ou script de instalação indicado no README do dotfiles), por exemplo:
+
+```bash
+cd ~/dotfiles
+# Exemplo genérico — confirma no README do teu fork/clone
+stow zsh tmux nvim
+```
+
+Objetivo: **zsh**, **tmux** e **Neovim** consumirem a configuração **a partir desse clone** (symlinks ou layout que o dotfiles definir), não montar `~/.config/nvim` diretamente do home do host em alternativa.
+
+### Fluxo tmux + Neovim
+
+Com TTY interativo (`docker compose run` já usa `stdin_open` e `tty`):
+
+```bash
+tmux new -s dev
+# ou: tmux attach -t dev
+```
+
+Dentro do tmux, abre **nvim** num painel e usa outros painéis/janelas para servidores de desenvolvimento ou CLIs.
+
+Se cores ou truecolor estiverem estranhos, alinha `TERM` (no `.env` ou no host) com o que o dotfiles espera (ex. `xterm-256color` ou `tmux-256color`).
+
+### `known_hosts` e montagem SSH `:ro`
+
+Com `~/.ssh` montado em **read-only**, atualizações a `known_hosts` ou escritas nessa árvore **falham** dentro do contentor. Se precisares de gravar `known_hosts`, faz-o no host ou ajusta a estratégia de mounts (documenta o teu caso localmente).
+
+## Expor serviços na LAN
+
+No `docker-compose.yml`, o serviço `dev` publica portas de exemplo (`3000`, `8080`, `5173`). Edita a lista conforme o projeto. A partir de outro dispositivo na LAN acede a `http://<IP-do-host>:<porta>`.
+
+Restringe portas na firewall do host se só quiseres localhost ou tráfego específico.
+
+## Internet: perfil `public` (ngrok)
+
+1. Define `NGROK_AUTHTOKEN` no `.env` (token da consola ngrok).
+2. Ajusta `NGROK_TUNNEL_TARGET` se o serviço não estiver na porta `3000` **dentro** do contentor `dev` (formato `dev:<porta>` na rede Docker).
+3. Sobe o stack com o perfil:
+
+```bash
+docker compose --profile public up
+```
+
+O serviço **ngrok** partilha a rede `sandbox` com `dev` e cria um túnel HTTP até `NGROK_TUNNEL_TARGET` (por defeito `dev:3000`). Não commits o token; roda-o se vazar.
+
+## CLIs de IA
+
+### Opção A — na imagem (build)
+
+No `.env`:
+
+```bash
+INSTALL_AI_CLIS=1
+```
+
+Depois `docker compose build` (imagem maior: Node + ferramentas).
+
+### Opção B — depois do primeiro arranque
+
+Com o contentor a correr:
+
+```bash
+docker compose exec -u root dev /usr/local/bin/install-ai-clis.sh
+```
+
+O script instala Node (filial configurável `NODE_MAJOR`, por defeito 22) e, com prefixo npm em `/usr/local`, pacotes como **Gemini CLI**, **OpenCode**, **Qwen Code**; além disso executa os instaladores oficiais de **Claude Code** e **Cursor Agent CLI** quando possível. Variáveis de API/tokens: vê `.env.example` e a documentação de cada ferramenta.
+
+**Cursor**: instalação via `https://cursor.com/install`; binário esperado no PATH como `agent` (ou symlink em `/usr/local/bin`).
+
+Limitação: “isolamento” não inclui o que está montado: o contentor **lê/escreve** em `workspace` e `dotfiles`, e **lê** `~/.ssh` (mesmo `:ro`). Não executes software não confiável com esses mounts ativos. Mitigação futura: SSH agent forwarding em vez de montar chaves privadas.
+
+## Comandos úteis
+
+| Objetivo | Comando |
+|----------|---------|
+| Shell interativo | `docker compose run --rm dev` |
+| Instalar CLIs (root) | `docker compose exec -u root dev /usr/local/bin/install-ai-clis.sh` |
+| LAN + ngrok | `docker compose --profile public up` |
+
+## Verificação sugerida
+
+- `zsh` como shell, dotfiles aplicados.
+- `tmux -V`, sessão criada/anexada.
+- `nvim --version` **dentro** do tmux com config carregada.
+- `ssh -T git@github.com` (chaves do host via mount).
+- Servidor de desenvolvimento na porta mapeada, acesso a partir da LAN.
+- Com perfil `public`, URL ngrok a servir o mesmo serviço.
+
+## O que ficou de fora (por desenho)
+
+Orquestração Kubernetes, GPU, substituição de ngrok por Cloudflare Tunnel (podes documentar como alternativa localmente).

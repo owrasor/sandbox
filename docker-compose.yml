@@ -1,0 +1,48 @@
+services:
+  dev:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+      args:
+        INSTALL_AI_CLIS: ${INSTALL_AI_CLIS:-0}
+    container_name: sandbox-dev
+    stdin_open: true
+    tty: true
+    env_file:
+      - .env
+    environment:
+      USER_ID: ${USER_ID}
+      GROUP_ID: ${GROUP_ID}
+      TERM: ${TERM:-xterm-256color}
+    user: "0:0"
+    volumes:
+      - ${WORKSPACE_HOST:-./workspace}:/home/dev/workspace
+      - ${DOTFILES_HOST:?Defina DOTFILES_HOST no .env}:/home/dev/dotfiles
+      - ${SSH_DIR:?Defina SSH_DIR no .env}:/home/dev/.ssh:ro
+    ports:
+      - "3000:3000"
+      - "8080:8080"
+      - "5173:5173"
+    working_dir: /home/dev/workspace
+    networks:
+      - sandbox
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: sandbox-ngrok
+    profiles:
+      - public
+    depends_on:
+      - dev
+    environment:
+      # Obrigatório na prática ao usar `docker compose --profile public up` (ver docs/sandbox.md).
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
+    command:
+      - http
+      - ${NGROK_TUNNEL_TARGET:-dev:3000}
+    networks:
+      - sandbox
+
+networks:
+  sandbox:
+    driver: bridge
