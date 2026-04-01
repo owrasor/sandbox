@@ -64,12 +64,12 @@ Consolidação das decisões para a feature `001-angie-proxy-test`. Data: 2026-0
 
 ## 5. Organização da configuração Angie
 
-**Decision**: Ficheiro principal mínimo + **`conf.d/*.conf`** montados (um ficheiro por site ou por equipa), com `include` no `http`/`server` conforme padrão Nginx/Angie.
+**Decision**: Ficheiro principal mínimo + **`sites/*.conf`** montados em `docker/angie/sites/` (um ficheiro por site ou por equipa), com `include` no bloco `http` conforme padrão Nginx/Angie.
 
 **Rationale**:
 
 - Facilita PRs pequenos e revisão.
-- Permite gitignore de `conf.d/local/*.conf` se necessário sem tocar no core.
+- Novos hosts `.test` adicionam-se com novos `sites/*.conf` sem alterar `angie.conf`.
 
 **Alternatives considered**:
 

@@ -57,5 +57,5 @@ Não é configuração do Angie; faz parte do **contrato operacional** do develo
 
 ## Transições (operacionais)
 
-1. Developer adiciona `conf.d/novo-site.conf` → valida → reinicia/recarrega Angie conforme imagem suportar.  
+1. Developer adiciona `sites/novo-site.conf` → valida → reinicia/recarrega Angie conforme imagem suportar.  
 2. Rotação de certificado: substitui ficheiros no volume host → reload/restart documentado em `quickstart.md`.

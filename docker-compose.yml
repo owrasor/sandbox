@@ -27,6 +27,21 @@ services:
     networks:
       - sandbox
 
+  angie:
+    image: docker.angie.software/angie:1.11.4
+    container_name: sandbox-angie
+    depends_on:
+      - dev
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/angie/angie.conf:/etc/angie/angie.conf:ro
+      - ./docker/angie/sites:/etc/angie/sites:ro
+      - ${ANGIE_CERTS_HOST:-./docker/angie/certs}:/etc/angie/certs:ro
+    networks:
+      - sandbox
+
   ngrok:
     image: ngrok/ngrok:latest
     container_name: sandbox-ngrok

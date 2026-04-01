@@ -57,7 +57,7 @@ Como mantenedor do repo, quero o Angie como serviço Compose (rede `sandbox`, vo
 - Upstream indisponível: Angie deve devolver 502/504 de forma previsível; documentar como diagnosticar.
 - Conflito de portas 80/443 no host: documentar requisito ou portas alternativas mapeadas.
 - Browser/OS que não confia na CA local: fallback documentado (curl `-k` apenas para debug, não como solução de produto local).
-- Múltiplos projetos com o mesmo `server_name`: validação manual da configuração; evitar duplicados na pasta `conf.d`.
+- Múltiplos projetos com o mesmo `server_name`: validação manual da configuração; evitar duplicados entre ficheiros em `docker/angie/sites/`.
 
 ## Requirements *(mandatory)*
 

@@ -57,9 +57,11 @@ specs/001-angie-proxy-test/
 docker/
 ├── Dockerfile                    # existente (dev)
 ├── angie/                        # NOVO: configuração do proxy
-│   ├── angie.conf                # http global + include conf.d
-│   └── conf.d/
-│       └── example-app.test.conf # exemplo versionado (proxy_pass → dev:PORT)
+│   ├── angie.conf                # http global + include sites/*.conf
+│   ├── sites/
+│   │   ├── README.md             # como adicionar novos sites
+│   │   └── *.conf                # virtual hosts .test (ex.: example-app.test.conf)
+│   └── certs/                    # local only (gitignored PEM)
 ├── entrypoint.sh
 └── install-ai-clis.sh
 

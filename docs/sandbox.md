@@ -69,6 +69,24 @@ No `docker-compose.yml`, o serviço `dev` publica portas de exemplo (`3000`, `80
 
 Restringe portas na firewall do host se só quiseres localhost ou tráfego específico.
 
+## Angie: proxy reverso `*.test` com HTTPS
+
+O serviço **`angie`** expõe **80** e **443** no host e faz proxy reverso para upstreams na rede `sandbox` (ex.: `dev:5173`), com TLS terminado no contentor. Virtual hosts adicionam-se em **`docker/angie/sites/*.conf`** (ver `docker/angie/sites/README.md`); certificados em `docker/angie/certs/` (gitignored) ou `ANGIE_CERTS_HOST` no `.env`.
+
+Guia passo a passo (hosts, mkcert, `curl`, validação `angie -t`): [specs/001-angie-proxy-test/quickstart.md](../specs/001-angie-proxy-test/quickstart.md).
+
+```bash
+docker compose up -d dev angie
+```
+
+### Conflito de portas 80/443 no host
+
+Se outro serviço (Apache, outro proxy, Caddy) já usar **80** ou **443**, o contentor `angie` não consegue fazer bind — o `docker compose up` falha ou o mapeamento fica indisponível. Liberta as portas (`ss -tlnp | grep -E ':80|:443'`) ou altera temporariamente o mapeamento no `docker-compose.yml` (ex.: `8080:80`, `8443:443`) e ajusta o teu fluxo local (aceder a `https://example-app.test:8443` ou equivalente).
+
+### Debug HTTPS com `curl -k`
+
+Quando o browser mostra certificado não confiável mas queres confirmar que o Angie responde, usa `curl -vk https://<hostname>.test/` **apenas** em desenvolvimento local. Não substitui instalar/confiar na CA mkcert para testar cookies `Secure` e comportamento real do browser.
+
 ## Internet: perfil `public` (ngrok)
 
 1. Define `NGROK_AUTHTOKEN` no `.env` (token da consola ngrok).
@@ -113,6 +131,7 @@ Limitação: “isolamento” não inclui o que está montado: o contentor **lê
 |----------|---------|
 | Shell interativo | `docker compose run --rm dev` |
 | Instalar CLIs (root) | `docker compose exec -u root dev /usr/local/bin/install-ai-clis.sh` |
+| Dev + proxy `.test` (Angie) | `docker compose up -d dev angie` |
 | LAN + ngrok | `docker compose --profile public up` |
 
 ## Verificação sugerida

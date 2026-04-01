@@ -1,1 +1,5 @@
 .env
+
+# Angie — certificados e chaves locais (nunca no Git)
+docker/angie/certs/*.pem
+docker/angie/certs/*-key.pem

@@ -1,47 +1,44 @@
 # Contract: configuração Angie (Nginx-compatible)
 
-**Versão**: 1.0 (planeamento)
+**Versão**: 1.2 (`sites/` para virtual hosts)
 
 ## Layout de ficheiros no repositório
 
 ```text
 docker/angie/
-├── angie.conf          # eventos + http + include conf.d/*.conf
-├── conf.d/
-│   └── *.conf          # um ou mais virtual hosts
-└── certs/              # gitignored — apenas no disco local
+├── angie.conf          # worker/events/http + include sites/*.conf
+├── sites/
+│   ├── README.md       # como adicionar novos hosts .test
+│   └── *.conf          # um ou mais virtual hosts por ficheiro
+└── certs/              # gitignored — PEM no disco local + README.md versionado
 ```
 
-## `angie.conf` (mínimo lógico)
+## `angie.conf`
 
-- Declaração `worker_processes` conforme defaults da imagem ou `auto`.
-- Bloco `http` com:
-  - `include /etc/angie/conf.d/*.conf` **ou** path equivalente suportado pela imagem montada.
-  - Tipos MIME padrão se não herdados.
-- Sem credenciais em claro no repo.
+- Ficheiro principal montado em **`/etc/angie/angie.conf`** no contentor.
+- Bloco `http` com `include /etc/angie/mime.types;` e `include /etc/angie/sites/*.conf;` (directório montado em `/etc/angie/sites`).
 
 ## Bloco `server` HTTPS (contrato por virtual host)
 
-Cada ficheiro em `conf.d/` para site com TLS **deve** incluir:
+Cada ficheiro em `sites/` para site com TLS **deve** incluir:
 
 - `listen 443 ssl;`
-- `server_name <hostname>;` alinhado com certificado (wildcard `*.test` ou nome explícito).
-- `ssl_certificate` e `ssl_certificate_key` apontando para ficheiros **dentro** do volume de certs montado.
-- `location /` com `proxy_pass http://<upstream_host>:<port>;`
-- Recomendado: `proxy_set_header Host $host;`, `X-Forwarded-For $proxy_add_x_forwarded_for;`, `X-Forwarded-Proto $scheme;`
+- `server_name <hostname>;` alinhado com certificado.
+- `ssl_certificate` e `ssl_certificate_key` apontando para **`/etc/angie/certs/...`** (volume de certs).
+- `location /` com proxy para upstream na rede Docker. No exemplo versionado usa-se `resolver 127.0.0.11;`, variável `set $upstream_dev http://dev:5173;` e `proxy_pass $upstream_dev;` para adiar a resolução de `dev` (permite `angie -t` fora da stack e evita falha se o nome ainda não existir no DNS do contentor).
+- `proxy_set_header Host $host;`, `X-Forwarded-For $proxy_add_x_forwarded_for;`, `X-Forwarded-Proto $scheme;`
 
-## Bloco `server` HTTP (opcional)
+## Bloco `server` HTTP (exemplo)
 
-- `listen 80;` com `return 301 https://$host$request_uri;` **ou** servir só HTTP em dev — política por ficheiro, documentada no comentário do topo do `.conf`.
+- `listen 80;` com `return 301 https://$host$request_uri;` no exemplo `sites/example-app.test.conf`.
 
 ## O que não é permitido no Git
 
-- Ficheiros `*.pem` / `*.key` privados dentro de paths versionados (usar `certs/` ignorado).
-- URLs de upstream com credenciais na query string.
+- Ficheiros `*.pem` / chaves privadas (ignorados; ver `.gitignore`).
 
 ## Validação
 
-- Antes de PR: comando de teste de configuração documentado em `quickstart.md` deve passar.
+- `docker compose run --rm angie angie -t` (ver `quickstart.md`).
 
 ## Extensão futura
 
