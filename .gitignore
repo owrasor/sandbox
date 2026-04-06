@@ -1,4 +1,25 @@
 .env
+.env.*
+!.env.example
+
+# Node / build artefactos comuns
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE / SO
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
 
 # Angie — certificados e chaves locais (nunca no Git)
 docker/angie/certs/*.pem

@@ -28,7 +28,7 @@ O entrypoint **não** faz `chown` recursivo sobre `workspace` nem `dotfiles` (ev
 ## Construir e entrar
 
 ```bash
-docker compose build
+docker compose build dev
 docker compose run --rm dev
 ```
 
@@ -99,29 +99,30 @@ docker compose --profile public up
 
 O serviço **ngrok** partilha a rede `sandbox` com `dev` e cria um túnel HTTP até `NGROK_TUNNEL_TARGET` (por defeito `dev:3000`). Não commits o token; roda-o se vazar.
 
+## Runtimes (mise, PHP, Node)
+
+A imagem `dev` instala **[mise](https://mise.jdx.dev/)** no build e corre `mise install --system php@8.4 node@22`. Os binários ficam em `/usr/local/share/mise/installs/...`; o PATH de shell de login (`zsh -l`) é configurado em `/etc/profile.d/mise-system-runtimes.sh` e em `/etc/zsh/zprofile` (o zsh de login em Ubuntu não carrega `profile.d` por defeito).
+
+- **Primeira sessão**: `php`, `node` e `mise` devem estar disponíveis **sem** depender de dotfiles do host.
+- **Dotfiles do host**: se sobrescreverem `PATH` ou desactivarem o perfil do sistema, valida com `docker compose run --rm dev zsh -l -c 'command -v php node mise'`.
+- **Tempos de build**: a primeira `docker compose build dev` pode demorar (compilação/download de PHP via mise, `npm install -g`, instaladores externos). Requer rede estável.
+
 ## CLIs de IA
 
-### Opção A — na imagem (build)
+O script `docker/install-ai-clis.sh` corre **sempre** durante o build da imagem. **Não** é necessário editar o `.env` para “ligar” esta fase.
 
-No `.env`:
+- **Node para npm**: se já existir no PATH uma major **22** (o Node instalado pelo mise), o script **não** adiciona o repositório NodeSource. Caso contrário, usa NodeSource como *fallback* (`NODE_MAJOR`, por defeito 22).
+- **npm (prefixo `/usr/local`)**: `@google/gemini-cli`, **`opencode-ai`** (comando `opencode`), `@qwen-code/qwen-code`.
+- **Claude Code**: instalador `https://claude.ai/install.sh`; binário em `/usr/local/bin/claude` (cópia a partir de `~/.local` do root no build, para o utilizador `dev` não depender de `/root`).
+- **Cursor Agent**: instalador `https://cursor.com/install`; o pacote completo fica em `/usr/local/share/cursor-agent/current`, com `agent` em `/usr/local/bin` (o launcher precisa de `index.js` e do `node` embutido no mesmo directório).
 
-```bash
-INSTALL_AI_CLIS=1
-```
-
-Depois `docker compose build` (imagem maior: Node + ferramentas).
-
-### Opção B — depois do primeiro arranque
-
-Com o contentor a correr:
+Para **reinstalar** ou actualizar manualmente (como root):
 
 ```bash
 docker compose exec -u root dev /usr/local/bin/install-ai-clis.sh
 ```
 
-O script instala Node (filial configurável `NODE_MAJOR`, por defeito 22) e, com prefixo npm em `/usr/local`, pacotes como **Gemini CLI**, **OpenCode**, **Qwen Code**; além disso executa os instaladores oficiais de **Claude Code** e **Cursor Agent CLI** quando possível. Variáveis de API/tokens: vê `.env.example` e a documentação de cada ferramenta.
-
-**Cursor**: instalação via `https://cursor.com/install`; binário esperado no PATH como `agent` (ou symlink em `/usr/local/bin`).
+Variáveis de API/tokens: vê `.env.example` e a documentação de cada ferramenta.
 
 Limitação: “isolamento” não inclui o que está montado: o contentor **lê/escreve** em `workspace` e `dotfiles`, e **lê** `~/.ssh` (mesmo `:ro`). Não executes software não confiável com esses mounts ativos. Mitigação futura: SSH agent forwarding em vez de montar chaves privadas.
 
@@ -130,7 +131,7 @@ Limitação: “isolamento” não inclui o que está montado: o contentor **lê
 | Objetivo | Comando |
 |----------|---------|
 | Shell interativo | `docker compose run --rm dev` |
-| Instalar CLIs (root) | `docker compose exec -u root dev /usr/local/bin/install-ai-clis.sh` |
+| Reexecutar instalador de CLIs (root) | `docker compose exec -u root dev /usr/local/bin/install-ai-clis.sh` |
 | Dev + proxy `.test` (Angie) | `docker compose up -d dev angie` |
 | LAN + ngrok | `docker compose --profile public up` |
 

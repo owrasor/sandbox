@@ -28,17 +28,17 @@ Edita `.env` e define pelo menos:
 Constrói e entra no contentor de desenvolvimento:
 
 ```bash
-docker compose build
+docker compose build dev
 docker compose run --rm dev
 ```
 
-Dentro do contentor: utilizador `dev`, shell de login **zsh**, diretório de trabalho `/home/dev/workspace`. Aplica os dotfiles a partir de `~/dotfiles` conforme o README do repositório de dotfiles (por exemplo Stow).
+Dentro do contentor: utilizador `dev`, shell de login **zsh**, diretório de trabalho `/home/dev/workspace`. A imagem inclui **mise**, **PHP 8.4** e **Node 22** (instalação de sistema) e as **CLIs de IA** documentadas em `docs/sandbox.md` — **não** é necessário definir variável no `.env` só para as instalar. Aplica os dotfiles a partir de `~/dotfiles` conforme o README do repositório de dotfiles (por exemplo Stow).
 
 ## Serviços do Compose
 
 | Serviço   | Função                                                                                                                                                           |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **dev**   | Imagem customizada (`docker/Dockerfile`): Ubuntu 24.04, zsh, tmux, Neovim, ferramentas de build; portas publicadas por defeito `3000`, `8080`, `5173`            |
+| **dev**   | Imagem customizada (`docker/Dockerfile`): Ubuntu 24.04, **mise**, **PHP 8.4**, **Node 22**, CLIs de IA (Gemini, OpenCode, Qwen, Claude Code, Cursor Agent), zsh, tmux, Neovim, ferramentas de build; portas `3000`, `8080`, `5173` |
 | **angie** | [Angie](https://angie.software/) `1.11.4` como proxy reverso; TLS com certificados em `docker/angie/certs/` (ver documentação em `docker/angie/certs/README.md`) |
 | **ngrok** | Perfil Compose `public`: túnel HTTP até `NGROK_TUNNEL_TARGET` (por defeito `dev:3000`)                                                                           |
 
@@ -63,7 +63,7 @@ docker compose --profile public up
 ├── docker/
 │   ├── Dockerfile          # Imagem do serviço dev
 │   ├── entrypoint.sh
-│   ├── install-ai-clis.sh  # Instalação opcional de Node e CLIs de IA
+│   ├── install-ai-clis.sh  # CLIs de IA (corrida no build; Node via mise quando possível)
 │   └── angie/              # Configuração Angie + sites *.conf + certs (gitignored)
 ├── docs/
 │   └── sandbox.md          # Guia completo (tmux, LAN, Angie, ngrok, CLIs de IA)
@@ -75,7 +75,7 @@ Novos virtual hosts: ficheiros em `docker/angie/sites/*.conf` — ver [docker/an
 
 ## Documentação detalhada
 
-- **[docs/sandbox.md](docs/sandbox.md)** — fluxo completo: dotfiles, tmux, SSH em montagem read-only, exposição na LAN, Angie, ngrok, instalação de CLIs de IA (`INSTALL_AI_CLIS` ou script pós-arranque).
+- **[docs/sandbox.md](docs/sandbox.md)** — fluxo completo: dotfiles, tmux, SSH em montagem read-only, exposição na LAN, Angie, ngrok, **mise** e CLIs de IA (incluídas no build).
 - **[specs/001-angie-proxy-test/quickstart.md](specs/001-angie-proxy-test/quickstart.md)** — mkcert, `/etc/hosts`, validação `angie -t` e troubleshooting HTTPS.
 
 ## Segurança (nota breve)
