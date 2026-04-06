@@ -4,6 +4,8 @@ Repositório de **ambiente de desenvolvimento containerizado**: shell interativo
 
 O objetivo é trabalhar dentro de um contentor com ferramentas consistentes (zsh, tmux, Neovim, Git, build essentials) sem sacrificar o código e a configuração pessoal que permanecem no disco do host.
 
+**Governação de versões**: política de frescura, inventário e auditorias do contentor `dev` em **[docs/dev-environment/README.md](docs/dev-environment/README.md)**.
+
 ## Requisitos
 
 - [Docker](https://docs.docker.com/get-docker/) e [Docker Compose v2](https://docs.docker.com/compose/)
@@ -66,7 +68,8 @@ docker compose --profile public up
 │   ├── install-ai-clis.sh  # CLIs de IA (corrida no build; Node via mise quando possível)
 │   └── angie/              # Configuração Angie + sites *.conf + certs (gitignored)
 ├── docs/
-│   └── sandbox.md          # Guia completo (tmux, LAN, Angie, ngrok, CLIs de IA)
+│   ├── sandbox.md          # Guia completo (tmux, LAN, Angie, ngrok, CLIs de IA)
+│   └── dev-environment/    # Política de frescura, inventário, auditorias (spec 003)
 ├── specs/                  # Especificações e quickstarts (ex.: proxy Angie)
 └── workspace/              # Diretório de trabalho sugerido no host (criar se usar WORKSPACE_HOST=./workspace)
 ```
@@ -76,6 +79,7 @@ Novos virtual hosts: ficheiros em `docker/angie/sites/*.conf` — ver [docker/an
 ## Documentação detalhada
 
 - **[docs/sandbox.md](docs/sandbox.md)** — fluxo completo: dotfiles, tmux, SSH em montagem read-only, exposição na LAN, Angie, ngrok, **mise** e CLIs de IA (incluídas no build).
+- **[docs/dev-environment/README.md](docs/dev-environment/README.md)** — política de frescura, inventário de ferramentas, avaliação da plataforma base e registos de auditoria.
 - **[specs/001-angie-proxy-test/quickstart.md](specs/001-angie-proxy-test/quickstart.md)** — mkcert, `/etc/hosts`, validação `angie -t` e troubleshooting HTTPS.
 
 ## Segurança (nota breve)

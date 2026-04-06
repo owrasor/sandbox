@@ -2,6 +2,8 @@
 
 Ambiente de desenvolvimento em contentor: código e dotfiles no host via bind mount, ferramentas base isoladas (Ubuntu 24.04), **zsh**, **tmux**, **Neovim**, exposição **LAN** por portas e túnel **opcional** com **ngrok**.
 
+**Governação de frescura das ferramentas** (SLAs, inventário, auditorias): ver **[dev-environment/freshness-policy.md](./dev-environment/freshness-policy.md)** e o índice **[dev-environment/README.md](./dev-environment/README.md)**.
+
 ## Pré-requisitos
 
 - Docker e Docker Compose v2
