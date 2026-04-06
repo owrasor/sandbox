@@ -16,7 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gosu \
     zsh \
     tmux \
-    neovim \
     build-essential \
     pkg-config \
     ripgrep \
@@ -48,6 +47,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     default-libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Neovim — tarball estável oficial (https://neovim.io/doc/install/); pin explícito para builds reprodutíveis
+ARG NEOVIM_VERSION=v0.12.1
+RUN curl -fsSL "https://github.com/neovim/neovim/releases/download/${NEOVIM_VERSION}/nvim-linux-x86_64.tar.gz" -o /tmp/nvim-linux-x86_64.tar.gz \
+    && rm -rf /opt/nvim-linux-x86_64 \
+    && tar -C /opt -xzf /tmp/nvim-linux-x86_64.tar.gz \
+    && rm -f /tmp/nvim-linux-x86_64.tar.gz \
+    && printf '%s\n' \
+    '# Neovim estável upstream (ARG NEOVIM_VERSION no Dockerfile)' \
+    'export PATH="/opt/nvim-linux-x86_64/bin:${PATH}"' \
+    > /etc/profile.d/neovim-upstream.sh \
+    && chmod 644 /etc/profile.d/neovim-upstream.sh
+
 # fd-find no Ubuntu expõe o binário como fdfind
 RUN ln -sf /usr/bin/fdfind /usr/local/bin/fd
 
@@ -76,6 +87,11 @@ RUN printf '%s\n' \
     && printf '\n%s\n%s\n' \
     '# mise — mesmo PATH em zsh login (zprofile não inclui profile.d por defeito)' \
     '[ -r /etc/profile.d/mise-system-runtimes.sh ] && . /etc/profile.d/mise-system-runtimes.sh' \
+    >> /etc/zsh/zprofile
+
+RUN printf '\n%s\n%s\n' \
+    '# Neovim upstream (zsh login)' \
+    '[ -r /etc/profile.d/neovim-upstream.sh ] && . /etc/profile.d/neovim-upstream.sh' \
     >> /etc/zsh/zprofile
 
 COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh

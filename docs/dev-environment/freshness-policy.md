@@ -9,7 +9,7 @@
 |-----------|----------------------------------------|-------|
 | Pacotes **APT** (Ubuntu 24.04) | Repositórios oficiais Ubuntu para a série LTS em uso | Versões seguem o ciclo LTS; *não* se considera «estável» o canal Debian unstable/testing. |
 | Runtimes **mise** (`php@8.4`, `node@22`) | Releases publicadas nos canais estáveis dos fornecedores (PHP.net, Node.js) para os **major/minor pinados** no Dockerfile | O pin é `8.4` e `22`; dentro desses, adoptar **última patch** disponível no registry mise no rebuild. |
-| **Neovim** e outros pacotes só APT | Versão empacotada no Ubuntu para a imagem base | Se o pacote distro violar o SLA P1, abrir excepção ou migrar canal (ex.: mise/build) com PR dedicado. |
+| **Neovim** | Release estável em [GitHub Neovim](https://github.com/neovim/neovim/releases), artefacto `nvim-linux-x86_64.tar.gz`; pin `ARG NEOVIM_VERSION` no `docker/Dockerfile` | Bump: seguir §3; manter alinhamento com [neovim.io/doc/install](https://neovim.io/doc/install/). |
 
 **Excluído**: builds noturnas, `-git`, forks não oficiais, salvo excepção documentada.
 

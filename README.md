@@ -40,7 +40,7 @@ Dentro do contentor: utilizador `dev`, shell de login **zsh**, diretório de tra
 
 | Serviço   | Função                                                                                                                                                           |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **dev**   | Imagem customizada (`docker/Dockerfile`): Ubuntu 24.04, **mise**, **PHP 8.4**, **Node 22**, CLIs de IA (Gemini, OpenCode, Qwen, Claude Code, Cursor Agent), zsh, tmux, Neovim, ferramentas de build; portas `3000`, `8080`, `5173` |
+| **dev**   | Imagem customizada (`docker/Dockerfile`): Ubuntu 24.04, **mise**, **PHP 8.4**, **Node 22**, **Neovim 0.12.x** (tarball estável oficial GitHub, pin `NEOVIM_VERSION`), CLIs de IA (Gemini, OpenCode, Qwen, Claude Code, Cursor Agent), zsh, tmux, ferramentas de build; portas `3000`, `8080`, `5173` |
 | **angie** | [Angie](https://angie.software/) `1.11.4` como proxy reverso; TLS com certificados em `docker/angie/certs/` (ver documentação em `docker/angie/certs/README.md`) |
 | **ngrok** | Perfil Compose `public`: túnel HTTP até `NGROK_TUNNEL_TARGET` (por defeito `dev:3000`)                                                                           |
 

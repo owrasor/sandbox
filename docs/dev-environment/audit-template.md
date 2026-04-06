@@ -34,7 +34,7 @@ Comandos usados (exemplo):
 
 ```bash
 docker compose build dev
-docker run --rm --entrypoint bash sandbox-dev:latest -lc 'export PATH="/usr/local/share/mise/installs/node/22/bin:/usr/local/share/mise/installs/php/8.4/bin:${PATH}"; php -v; node -v; nvim --version | head -1'
+docker run --rm --entrypoint bash sandbox-dev:latest -lc 'php -v | head -1; node -v; command -v nvim; nvim --version | head -1'
 ```
 
-(Ajustar se a tag da imagem ou o PATH mudarem.)
+Shell de **login** (`-lc`) carrega `/etc/profile.d/` (mise + Neovim upstream). Se algum comando falhar, confirma `PATH` com `docker compose run --rm dev bash -lc 'echo $PATH'`.

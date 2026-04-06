@@ -26,7 +26,7 @@ A política de frescura ([freshness-policy.md](./freshness-policy.md)) exige fer
 
 - **Base**: Ubuntu 24.04 LTS, pin explícito no Dockerfile.  
 - **Runtimes críticos**: PHP e Node via **mise** com pins `8.4` e `22`.  
-- **Editores / CLI**: maioritariamente **APT**; **Neovim** empacotado em 0.9.5 (atrás do upstream estável ≥ 0.10), tratado como **excepção** documentada até decisão de canal.
+- **Editores / CLI**: maioritariamente **APT**; **Neovim** em **0.12.1** via **tarball estável oficial** (GitHub Releases, pin `NEOVIM_VERSION` no `docker/Dockerfile`), conforme [neovim.io/doc/install](https://neovim.io/doc/install/).
 
 ## Opções consideradas
 
@@ -56,10 +56,10 @@ A política de frescura ([freshness-policy.md](./freshness-policy.md)) exige fer
 ## Recomendação
 
 **Manter (A)** a base **Ubuntu 24.04 LTS** com **mise** para runtimes pinados; **não migrar** para rolling neste ciclo.  
-Planeamento: avaliar **(C)** para **Neovim** (ou equivalente) num PR futuro para fechar a excepção P1, se a política deixar de aceitar 0.9.x.
+**Neovim**: adoptada a opção **(C)** — canal **upstream tarball** (não mise), excepção P1 **encerrada** (feature `004-update-neovim-stable`).
 
 **Próximos passos**
 
 1. Revisor humano assinar metadados acima.  
-2. Abrir tarefa/PR opcional: Neovim via mise ou binário upstream.  
+2. Ao bump de **Neovim**, actualizar `ARG NEOVIM_VERSION`, inventário e registo de auditoria no mesmo PR.  
 3. Rever esta avaliação **anualmente** ou após mudança major do Dockerfile.

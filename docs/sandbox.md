@@ -101,9 +101,11 @@ docker compose --profile public up
 
 O serviço **ngrok** partilha a rede `sandbox` com `dev` e cria um túnel HTTP até `NGROK_TUNNEL_TARGET` (por defeito `dev:3000`). Não commits o token; roda-o se vazar.
 
-## Runtimes (mise, PHP, Node)
+## Runtimes (mise, PHP, Node, Neovim)
 
 A imagem `dev` instala **[mise](https://mise.jdx.dev/)** no build e corre `mise install --system php@8.4 node@22`. Os binários ficam em `/usr/local/share/mise/installs/...`; o PATH de shell de login (`zsh -l`) é configurado em `/etc/profile.d/mise-system-runtimes.sh` e em `/etc/zsh/zprofile` (o zsh de login em Ubuntu não carrega `profile.d` por defeito).
+
+**Neovim** não vem do APT: usa-se o **tarball estável oficial** (Linux x86_64) referenciado em [neovim.io/doc/install](https://neovim.io/doc/install/), com versão pinada por `ARG NEOVIM_VERSION` no `docker/Dockerfile`, extraído para `/opt/nvim-linux-x86_64` e antecedido no `PATH` via `/etc/profile.d/neovim-upstream.sh` (e o mesmo snippet em `zprofile`).
 
 - **Primeira sessão**: `php`, `node` e `mise` devem estar disponíveis **sem** depender de dotfiles do host.
 - **Dotfiles do host**: se sobrescreverem `PATH` ou desactivarem o perfil do sistema, valida com `docker compose run --rm dev zsh -l -c 'command -v php node mise'`.
