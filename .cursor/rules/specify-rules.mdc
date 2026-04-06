@@ -15,6 +15,8 @@ Auto-generated from all feature plans. Last updated: 2026-04-06
 - Ficheiros versionados em `docs/` e `specs/003-current-stable-packages/`; sem base de dados. (003-current-stable-packages)
 - Dockerfile (syntax OCI); shell **Bash** nos `RUN`; imagem base **Ubuntu 24.04** + **Neovim** estável via tarball oficial GitHub; **curl**, **ca-certificates**; **mise** (já na imagem) para PHP/Node — Neovim **não** depende do mise neste plano (004-update-neovim-stable)
 - N/A (sem persistência de dados da aplicação; apenas camadas da imagem) (004-update-neovim-stable)
+- Dockerfile (OCI); shell **Bash** nos `RUN`; imagem base **Ubuntu 24.04** + pacote **`sudo`** (distro); **Docker Compose v2** para semântica de `working_dir` / `exec` (005-dev-shell-home-sudo)
+- N/A (sem persistência de dados da aplicação; mounts existentes preservados) (005-dev-shell-home-sudo)
 
 - Configuração declarativa (Angie/Nginx-style); Docker Compose YAML; shell para validação/manual QA. + Imagem **Angie** (`docker.angie.software/angie`, tag fixa recomendada após `docker pull`/release notes), Docker Compose v2, opcionalmente **mkcert** no host. (001-angie-proxy-test)
 
@@ -34,6 +36,7 @@ tests/
 Configuração declarativa (Angie/Nginx-style); Docker Compose YAML; shell para validação/manual QA.: Follow standard conventions
 
 ## Recent Changes
+- 005-dev-shell-home-sudo: Added Dockerfile (OCI); shell **Bash** nos `RUN`; imagem base **Ubuntu 24.04** + pacote **`sudo`** (distro); **Docker Compose v2** para semântica de `working_dir` / `exec`
 - 004-update-neovim-stable: Plano — **Neovim** estável (ex. **v0.12.1**) via tarball oficial GitHub em `/opt/nvim-linux-x86_64`, `PATH` em `profile.d`; remoção do pacote `neovim` do apt na imagem dev; docs em `docs/dev-environment/`.
 - 003-current-stable-packages: Added Markdown para política e relatórios; **Bash** para scripts de verificação opcionais; **Dockerfile** (sintaxe estável) para alterações futuras à imagem. + Imagem actual **Ubuntu 24.04**; **apt** (pacotes de sistema); **mise** já integrado para **PHP 8.4** e **Node 22**; extensão futura do mise (ou equivalente documentado) para ferramentas cujo pacote distro fica aquém da política (ex.: editor).
 

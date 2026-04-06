@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     gnupg \
     gosu \
+    sudo \
     zsh \
     tmux \
     build-essential \
@@ -70,6 +71,8 @@ RUN userdel -r ubuntu 2>/dev/null || true; \
 RUN groupadd -g 1001 dev && \
     useradd -u 1001 -g dev -m -s /bin/zsh dev
 
+RUN printf '%s\n' 'dev ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/dev && chmod 0440 /etc/sudoers.d/dev
+
 # mise — instalador oficial (https://mise.run); PHP 8.4 + Node 22 como ferramentas de sistema partilhadas
 # (cookbook: https://mise.jdx.dev/mise-cookbook/docker.html — `mise install --system` + devcontainers)
 ENV MISE_INSTALL_PATH="/usr/local/bin/mise"
@@ -108,7 +111,11 @@ RUN ln -sf /usr/local/share/mise/installs/node/22/bin/node /usr/local/bin/node \
     && ln -sf /usr/local/share/mise/installs/node/22/bin/npm /usr/local/bin/npm \
     && ln -sf /usr/local/share/mise/installs/node/22/bin/npx /usr/local/bin/npx
 
-WORKDIR /home/dev/workspace
+WORKDIR /home/dev
+
+# Processo principal como `dev`: `docker compose exec` / `docker exec` usam este utilizador
+# por defeito em vez de root.
+USER dev
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["zsh", "-l"]

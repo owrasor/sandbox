@@ -34,7 +34,7 @@ docker compose build dev
 docker compose run --rm dev
 ```
 
-Dentro do contentor o utilizador é `dev`, shell de login **zsh**, diretório inicial do compose: `/home/dev/workspace`.
+Dentro do contentor o utilizador é `dev`, shell de login **zsh**. O **diretório de trabalho inicial** do serviço `dev` (Compose `working_dir` e imagem `WORKDIR`) é **`/home/dev`**. O código do projecto continua montado em **`/home/dev/workspace`** — usa `cd workspace` (relativo à home) ou `cd /home/dev/workspace` quando precisares de trabalhar no repositório.
 
 ### Aplicar dotfiles
 
@@ -135,9 +135,21 @@ Limitação: “isolamento” não inclui o que está montado: o contentor **lê
 | Objetivo | Comando |
 |----------|---------|
 | Shell interativo | `docker compose run --rm dev` |
+| Shell num contentor já a correr | `docker compose exec dev zsh` (utilizador **dev** — a imagem define `USER dev`) |
 | Reexecutar instalador de CLIs (root) | `docker compose exec -u root dev /usr/local/bin/install-ai-clis.sh` |
 | Dev + proxy `.test` (Angie) | `docker compose up -d dev angie` |
 | LAN + ngrok | `docker compose --profile public up` |
+
+## Diretório inicial da sessão e `sudo`
+
+- **CWD ao entrar**: após `docker compose run --rm dev` ou `docker compose exec dev zsh`, confirma com `pwd` — deve ser `/home/dev`.
+- **`sudo`**: o utilizador `dev` tem elevação **sem palavra-passe** dentro deste contentor (apenas ambiente de desenvolvimento). Verificação rápida:
+
+```bash
+docker compose run --rm dev zsh -lc 'sudo -n true && sudo -n id -u'
+```
+
+A segunda linha deve mostrar `0`. Guia passo a passo: [specs/005-dev-shell-home-sudo/quickstart.md](../specs/005-dev-shell-home-sudo/quickstart.md).
 
 ## Verificação sugerida
 
