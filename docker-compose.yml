@@ -3,20 +3,19 @@ services:
     build:
       context: ./docker
       dockerfile: Dockerfile
+      additional_contexts:
+        dotfiles: ${DOTFILES_HOST:?Defina DOTFILES_HOST no .env}
+      args:
+        DOTFILES_BOOTSTRAP_SCRIPT: ${DOTFILES_BOOTSTRAP_SCRIPT:-}
     container_name: sandbox-dev
     stdin_open: true
     tty: true
-    # Variáveis opcionais do .env (ex.: DOTFILES_BOOTSTRAP_SCRIPT, SANDBOX_DOTFILES_BOOTSTRAP_SKIP)
-    # são injectadas automaticamente no contentor via env_file — não é obrigatório repetir em `environment:`.
     env_file:
       - .env
     environment:
       USER_ID: ${USER_ID}
       GROUP_ID: ${GROUP_ID}
       TERM: ${TERM:-xterm-256color}
-      # Pass-through opcional (valores vêm do `.env` na raiz ou do ambiente ao invocar compose)
-      DOTFILES_BOOTSTRAP_SCRIPT: ${DOTFILES_BOOTSTRAP_SCRIPT:-}
-      SANDBOX_DOTFILES_BOOTSTRAP_SKIP: ${SANDBOX_DOTFILES_BOOTSTRAP_SKIP:-}
     volumes:
       - ${WORKSPACE_HOST:-./workspace}:/home/dev/workspace
       - ${DOTFILES_HOST:?Defina DOTFILES_HOST no .env}:/home/dev/dotfiles

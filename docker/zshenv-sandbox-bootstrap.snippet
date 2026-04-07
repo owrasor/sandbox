@@ -1,5 +1,0 @@
-
-# sandbox-dotfiles-bootstrap (007): script opcional dos dotfiles, no máximo uma vez por workspace
-if [[ $(id -un) == dev ]] && [[ -z ${SANDBOX_DOTFILES_BOOTSTRAP_SKIP:-} ]] && [[ -x /usr/local/bin/sandbox-dotfiles-bootstrap.sh ]]; then
-  command /usr/local/bin/sandbox-dotfiles-bootstrap.sh
-fi

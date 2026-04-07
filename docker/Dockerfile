@@ -75,8 +75,8 @@ RUN groupadd -g 1001 dev && \
 
 RUN printf '%s\n' 'dev ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/dev && chmod 0440 /etc/sudoers.d/dev
 
-# Preservar variáveis opcionais do Compose através de `sudo -E` no entrypoint (evita wipe de env).
-RUN printf '%s\n' 'Defaults env_keep += "DOTFILES_BOOTSTRAP_SCRIPT SANDBOX_DOTFILES_BOOTSTRAP_SKIP USER_ID GROUP_ID"' \
+# Preservar variáveis do Compose através de `sudo -E` no entrypoint (evita wipe de env).
+RUN printf '%s\n' 'Defaults env_keep += "USER_ID GROUP_ID"' \
     > /etc/sudoers.d/sandbox-bootstrap-env \
     && chmod 0440 /etc/sudoers.d/sandbox-bootstrap-env \
     && visudo -cf /etc/sudoers.d/sandbox-bootstrap-env
@@ -108,13 +108,6 @@ RUN printf '\n%s\n%s\n' \
 COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-COPY sandbox-dotfiles-bootstrap.sh /usr/local/bin/sandbox-dotfiles-bootstrap.sh
-RUN chmod +x /usr/local/bin/sandbox-dotfiles-bootstrap.sh
-
-COPY zshenv-sandbox-bootstrap.snippet /tmp/zshenv-sandbox-bootstrap.snippet
-RUN cat /tmp/zshenv-sandbox-bootstrap.snippet >> /etc/zsh/zshenv \
-    && rm -f /tmp/zshenv-sandbox-bootstrap.snippet
-
 COPY install-ai-clis.sh /usr/local/bin/install-ai-clis.sh
 RUN chmod +x /usr/local/bin/install-ai-clis.sh
 
@@ -144,6 +137,19 @@ WORKDIR /home/dev
 # Processo principal como `dev`: `docker compose exec` / `docker exec` usam este utilizador
 # por defeito em vez de root.
 USER dev
+
+# Dotfiles bootstrap (build-time): monta temporariamente o contexto "dotfiles"
+# (additional_contexts no Compose) e executa o script indicado pelo ARG, se existir.
+# O mount é efémero — nada do clone de dotfiles fica na imagem; apenas os ficheiros
+# que o script instalar em /home/dev/ (ex.: .zshrc, .config/) persistem nas camadas.
+ARG DOTFILES_BOOTSTRAP_SCRIPT=
+RUN --mount=from=dotfiles,target=/home/dev/dotfiles,rw \
+    set -e; \
+    script="${DOTFILES_BOOTSTRAP_SCRIPT:-}"; \
+    if [ -n "$script" ] && [ -f "/home/dev/dotfiles/$script" ]; then \
+      printf 'sandbox: a executar dotfiles bootstrap — %s\n' "$script"; \
+      bash "/home/dev/dotfiles/$script"; \
+    fi
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["zsh", "-l"]
