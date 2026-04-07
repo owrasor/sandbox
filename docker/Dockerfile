@@ -46,6 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     libpq-dev \
     default-libmysqlclient-dev \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Neovim — tarball estável oficial (https://neovim.io/doc/install/); pin explícito para builds reprodutíveis
@@ -58,7 +59,8 @@ RUN curl -fsSL "https://github.com/neovim/neovim/releases/download/${NEOVIM_VERS
     '# Neovim estável upstream (ARG NEOVIM_VERSION no Dockerfile)' \
     'export PATH="/opt/nvim-linux-x86_64/bin:${PATH}"' \
     > /etc/profile.d/neovim-upstream.sh \
-    && chmod 644 /etc/profile.d/neovim-upstream.sh
+    && chmod 644 /etc/profile.d/neovim-upstream.sh \
+    && ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
 
 # fd-find no Ubuntu expõe o binário como fdfind
 RUN ln -sf /usr/bin/fdfind /usr/local/bin/fd
@@ -72,6 +74,12 @@ RUN groupadd -g 1001 dev && \
     useradd -u 1001 -g dev -m -s /bin/zsh dev
 
 RUN printf '%s\n' 'dev ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/dev && chmod 0440 /etc/sudoers.d/dev
+
+# Preservar variáveis opcionais do Compose através de `sudo -E` no entrypoint (evita wipe de env).
+RUN printf '%s\n' 'Defaults env_keep += "DOTFILES_BOOTSTRAP_SCRIPT SANDBOX_DOTFILES_BOOTSTRAP_SKIP USER_ID GROUP_ID"' \
+    > /etc/sudoers.d/sandbox-bootstrap-env \
+    && chmod 0440 /etc/sudoers.d/sandbox-bootstrap-env \
+    && visudo -cf /etc/sudoers.d/sandbox-bootstrap-env
 
 # mise — instalador oficial (https://mise.run); PHP 8.4 + Node 22 como ferramentas de sistema partilhadas
 # (cookbook: https://mise.jdx.dev/mise-cookbook/docker.html — `mise install --system` + devcontainers)
@@ -100,6 +108,13 @@ RUN printf '\n%s\n%s\n' \
 COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+COPY sandbox-dotfiles-bootstrap.sh /usr/local/bin/sandbox-dotfiles-bootstrap.sh
+RUN chmod +x /usr/local/bin/sandbox-dotfiles-bootstrap.sh
+
+COPY zshenv-sandbox-bootstrap.snippet /tmp/zshenv-sandbox-bootstrap.snippet
+RUN cat /tmp/zshenv-sandbox-bootstrap.snippet >> /etc/zsh/zshenv \
+    && rm -f /tmp/zshenv-sandbox-bootstrap.snippet
+
 COPY install-ai-clis.sh /usr/local/bin/install-ai-clis.sh
 RUN chmod +x /usr/local/bin/install-ai-clis.sh
 
@@ -110,6 +125,19 @@ RUN /usr/local/bin/install-ai-clis.sh
 RUN ln -sf /usr/local/share/mise/installs/node/22/bin/node /usr/local/bin/node \
     && ln -sf /usr/local/share/mise/installs/node/22/bin/npm /usr/local/bin/npm \
     && ln -sf /usr/local/share/mise/installs/node/22/bin/npx /usr/local/bin/npx
+
+# PHP / Laravel: verificação de extensões (Laravel 12.x server requirements) + Composer global + instalador
+COPY verify-php-laravel-extensions.sh /usr/local/bin/verify-php-laravel-extensions.sh
+RUN chmod +x /usr/local/bin/verify-php-laravel-extensions.sh \
+    && export PATH="/usr/local/share/mise/installs/node/22/bin:/usr/local/share/mise/installs/php/8.4/bin:${PATH}" \
+    && /usr/local/bin/verify-php-laravel-extensions.sh
+
+ENV COMPOSER_HOME=/usr/local/share/composer
+RUN mkdir -p "${COMPOSER_HOME}" \
+    && export PATH="/usr/local/share/mise/installs/node/22/bin:/usr/local/share/mise/installs/php/8.4/bin:${PATH}" \
+    && composer global require laravel/installer \
+    && ln -sf "${COMPOSER_HOME}/vendor/bin/laravel" /usr/local/bin/laravel \
+    && chmod -R a+rX "${COMPOSER_HOME}"
 
 WORKDIR /home/dev
 

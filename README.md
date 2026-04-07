@@ -34,13 +34,13 @@ docker compose build dev
 docker compose run --rm dev
 ```
 
-Dentro do contentor: utilizador `dev`, shell de login **zsh**, diretório de trabalho inicial **`/home/dev`** (o código monta-se em `/home/dev/workspace`; usa `cd workspace` para o repositório). A imagem inclui **mise**, **PHP 8.4** e **Node 22** (instalação de sistema), **`sudo`** sem prompt para tarefas de sistema no contentor de desenvolvimento, e as **CLIs de IA** documentadas em `docs/sandbox.md` — **não** é necessário definir variável no `.env` só para as instalar. Aplica os dotfiles a partir de `~/dotfiles` conforme o README do repositório de dotfiles (por exemplo Stow).
+Dentro do contentor: utilizador `dev`, shell de login **zsh**, diretório de trabalho inicial **`/home/dev`** (o código monta-se em `/home/dev/workspace`; usa `cd workspace` para o repositório). A imagem inclui **mise**, **PHP 8.4** (com verificação de extensões para **Laravel** no build), **Composer**, **Laravel Installer** (`laravel`), **Node 22** (instalação de sistema), **`sudo`** sem prompt para tarefas de sistema no contentor de desenvolvimento, e as **CLIs de IA** documentadas em `docs/sandbox.md` — **não** é necessário definir variável no `.env` só para as instalar. Aplica os dotfiles a partir de `~/dotfiles` conforme o README do repositório de dotfiles (por exemplo Stow).
 
 ## Serviços do Compose
 
 | Serviço   | Função                                                                                                                                                           |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **dev**   | Imagem customizada (`docker/Dockerfile`): Ubuntu 24.04, **mise**, **PHP 8.4**, **Node 22**, **Neovim 0.12.x** (tarball estável oficial GitHub, pin `NEOVIM_VERSION`), CLIs de IA (Gemini, OpenCode, Qwen, Claude Code, Cursor Agent), zsh, tmux, `sudo` (NOPASSWD para `dev`), ferramentas de build; CWD inicial `/home/dev`; portas `3000`, `8080`, `5173` |
+| **dev**   | Imagem customizada (`docker/Dockerfile`): Ubuntu 24.04, **mise**, **PHP 8.4**, **Composer**, **Laravel Installer** (`laravel`), **Node 22**, **Neovim 0.12.x** (tarball estável oficial GitHub, pin `NEOVIM_VERSION`), CLIs de IA (Gemini, OpenCode, Qwen, Claude Code, Cursor Agent), zsh, tmux, `sudo` (NOPASSWD para `dev`), ferramentas de build; CWD inicial `/home/dev`; portas `3000`, `8080`, `5173` |
 | **angie** | [Angie](https://angie.software/) `1.11.4` como proxy reverso; TLS com certificados em `docker/angie/certs/` (ver documentação em `docker/angie/certs/README.md`) |
 | **ngrok** | Perfil Compose `public`: túnel HTTP até `NGROK_TUNNEL_TARGET` (por defeito `dev:3000`)                                                                           |
 

@@ -36,6 +36,38 @@ docker compose run --rm dev
 
 Dentro do contentor o utilizador é `dev`, shell de login **zsh**. O **diretório de trabalho inicial** do serviço `dev` (Compose `working_dir` e imagem `WORKDIR`) é **`/home/dev`**. O código do projecto continua montado em **`/home/dev/workspace`** — usa `cd workspace` (relativo à home) ou `cd /home/dev/workspace` quando precisares de trabalhar no repositório.
 
+Para **PHP / Laravel**: a imagem inclui **PHP 8.4** (mise), **Composer** no `PATH` e o comando global **`laravel`** (Laravel Installer). Verificação de extensões mínimas para Laravel no build: `/usr/local/bin/verify-php-laravel-extensions.sh`. Inventário e versões: [dev-environment/capability-inventory.md](./dev-environment/capability-inventory.md).
+
+### Bootstrap opcional de dotfiles (uma vez por workspace)
+
+Podes pedir ao contentor para correr **automaticamente**, na **primeira sessão Zsh com sucesso**, um script teu que está no **topo** do clone de dotfiles (o mesmo mount que `/home/dev/dotfiles`). Isto é útil para instalações iniciais (Stow, plugins, etc.) sem repetir a cada `docker compose run`.
+
+**Configuração no `.env`**
+
+- `DOTFILES_BOOTSTRAP_SCRIPT` — **opcional**. Valor = **nome do ficheiro apenas** (sem caminhos, sem `/`), por exemplo `bootstrap-dev.sh`. Caracteres permitidos: `[a-zA-Z0-9._-]`. O ficheiro tem de existir em `/home/dev/dotfiles/<nome>`.
+- `SANDBOX_DOTFILES_BOOTSTRAP_SKIP` — **opcional**. Se definires com qualquer valor não vazio, o hook **não corre** (útil para CI ou depuração).
+
+O `docker-compose.yml` expõe estas duas variáveis em `environment:` (substituição a partir do `.env` na raiz). O entrypoint do contentor usa `sudo -E` e regras `env_keep` na imagem para **não perder** estas variáveis ao alinhar UID/GID como root (evita o problema de `sudo env USER_ID=… GROUP_ID=…` que descartava o resto do ambiente).
+
+**Estado “já corrido”**
+
+- Gravado em **`workspace/.sandbox/dotfiles-bootstrap.done`** no host (pasta `workspace` do repositório por defeito). Esta pasta está no `.gitignore` — não vai para o Git.
+- **Repor a “primeira vez”**: apaga `workspace/.sandbox/dotfiles-bootstrap.done` (e, se quiseres, `dotfiles-bootstrap.lock`). No próximo arranque de Zsh o script volta a ser considerado.
+- Se mudares o nome do script no `.env` **depois** de já teres um marcador de sucesso, o sistema **não** volta a executar automaticamente até limpares o marcador (comportamento documentado para evitar surpresas).
+
+**Comportamento**
+
+- Variável **vazia ou ausente**: nada é executado; a shell arranca normalmente.
+- **Ficheiro em falta**: mensagem em **stderr**; **sem** marcador de sucesso; a shell continua (podes corrigir o `.env` ou o ficheiro nos dotfiles).
+- **Script termina com erro** (exit ≠ 0): **não** é criado marcador de sucesso; vês mensagem em stderr; corrige o script e volta a arrancar o contentor para uma nova tentativa.
+- **Script com sucesso** (exit 0): marcador criado; arranques futuros **não** voltam a invocar o script.
+
+O hook corre desde **`/etc/zsh/zshenv`** para qualquer processo Zsh do utilizador **`dev`**. O script de sistema está em `/usr/local/bin/sandbox-dotfiles-bootstrap.sh` (executa o teu ficheiro com **`bash --noprofile --norc`**). Mantém o teu bootstrap **não interactivo** (sem prompts), caso contrário o arranque pode bloquear.
+
+**Segurança**
+
+- Só é aceite um **segmento de nome** no topo do mount de dotfiles; caminhos com `..` ou `/` são rejeitados. O destino real do ficheiro é validado com `realpath` e tem de permanecer **dentro** de `/home/dev/dotfiles` (symlinks que apontem para fora são recusados).
+
 ### Aplicar dotfiles
 
 O clone dos dotfiles está em `/home/dev/dotfiles`. Segue o procedimento do próprio repositório (por exemplo GNU Stow ou script de instalação indicado no README do dotfiles), por exemplo:
@@ -105,7 +137,7 @@ O serviço **ngrok** partilha a rede `sandbox` com `dev` e cria um túnel HTTP a
 
 A imagem `dev` instala **[mise](https://mise.jdx.dev/)** no build e corre `mise install --system php@8.4 node@22`. Os binários ficam em `/usr/local/share/mise/installs/...`; o PATH de shell de login (`zsh -l`) é configurado em `/etc/profile.d/mise-system-runtimes.sh` e em `/etc/zsh/zprofile` (o zsh de login em Ubuntu não carrega `profile.d` por defeito).
 
-**Neovim** não vem do APT: usa-se o **tarball estável oficial** (Linux x86_64) referenciado em [neovim.io/doc/install](https://neovim.io/doc/install/), com versão pinada por `ARG NEOVIM_VERSION` no `docker/Dockerfile`, extraído para `/opt/nvim-linux-x86_64` e antecedido no `PATH` via `/etc/profile.d/neovim-upstream.sh` (e o mesmo snippet em `zprofile`).
+**Neovim** não vem do APT: usa-se o **tarball estável oficial** (Linux x86_64) referenciado em [neovim.io/doc/install](https://neovim.io/doc/install/), com versão pinada por `ARG NEOVIM_VERSION` no `docker/Dockerfile`, extraído para `/opt/nvim-linux-x86_64`, antecedido no `PATH` via `/etc/profile.d/neovim-upstream.sh` (e o mesmo snippet em `zprofile`), e exposto também como **`/usr/local/bin/nvim`** (shells não-login e `docker compose exec dev zsh` resolvem o mesmo binário estável).
 
 - **Primeira sessão**: `php`, `node` e `mise` devem estar disponíveis **sem** depender de dotfiles do host.
 - **Dotfiles do host**: se sobrescreverem `PATH` ou desactivarem o perfil do sistema, valida com `docker compose run --rm dev zsh -l -c 'command -v php node mise'`.

@@ -9,6 +9,10 @@ build/
 coverage/
 *.log
 
+# PHP / Composer (projectos no workspace montado)
+vendor/
+.phpunit.result.cache
+
 # Python
 __pycache__/
 *.pyc
@@ -24,3 +28,6 @@ Thumbs.db
 # Angie — certificados e chaves locais (nunca no Git)
 docker/angie/certs/*.pem
 docker/angie/certs/*-key.pem
+
+# Estado local do bootstrap de dotfiles no workspace montado (feature 007)
+workspace/.sandbox/
