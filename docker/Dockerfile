@@ -89,8 +89,11 @@ RUN curl -fsSL https://mise.run | sh
 
 RUN mise install --system php@8.4 node@22
 
-# `mise install --system` coloca binários em /usr/local/share/mise/installs/... (sem shims).
-# O zsh de login em Ubuntu não percorre /etc/profile.d — garantir PATH para `dev` e para RUNs seguintes.
+# Tornar runtimes mise + Neovim acessíveis a TODOS os processos (login, não-login, bash, cron, IDEs).
+# Sem este ENV, shells não-login (ex.: `zsh -c`, `bash -c`, exec de IDE) não vêem php/composer.
+ENV PATH="/usr/local/share/mise/installs/node/22/bin:/usr/local/share/mise/installs/php/8.4/bin:/opt/nvim-linux-x86_64/bin:${PATH}"
+
+# profile.d + zprofile mantidos como fallback documental para shells login que reconstruam o PATH.
 RUN printf '%s\n' \
     '# mise — runtimes de sistema (PHP 8.4, Node 22)' \
     'export PATH="/usr/local/share/mise/installs/node/22/bin:/usr/local/share/mise/installs/php/8.4/bin:${PATH}"' \
@@ -114,23 +117,27 @@ RUN chmod +x /usr/local/bin/install-ai-clis.sh
 # CLIs de IA: parte fixa do build; usa Node do mise (ver install-ai-clis.sh)
 RUN /usr/local/bin/install-ai-clis.sh
 
-# Alguns wrappers (ex. Cursor `agent`) referem `/usr/local/bin/node`; o Node real vem do mise.
+# Symlinks em /usr/local/bin/ — camada de robustez extra para contextos que possam
+# reconstruir o PATH sem o ENV da imagem (ex. wrappers de IDE, sudo -i, cron).
 RUN ln -sf /usr/local/share/mise/installs/node/22/bin/node /usr/local/bin/node \
     && ln -sf /usr/local/share/mise/installs/node/22/bin/npm /usr/local/bin/npm \
-    && ln -sf /usr/local/share/mise/installs/node/22/bin/npx /usr/local/bin/npx
+    && ln -sf /usr/local/share/mise/installs/node/22/bin/npx /usr/local/bin/npx \
+    && ln -sf /usr/local/share/mise/installs/php/8.4/bin/php /usr/local/bin/php \
+    && ln -sf /usr/local/share/mise/installs/php/8.4/bin/composer /usr/local/bin/composer
 
 # PHP / Laravel: verificação de extensões (Laravel 12.x server requirements) + Composer global + instalador
 COPY verify-php-laravel-extensions.sh /usr/local/bin/verify-php-laravel-extensions.sh
 RUN chmod +x /usr/local/bin/verify-php-laravel-extensions.sh \
-    && export PATH="/usr/local/share/mise/installs/node/22/bin:/usr/local/share/mise/installs/php/8.4/bin:${PATH}" \
     && /usr/local/bin/verify-php-laravel-extensions.sh
 
 ENV COMPOSER_HOME=/usr/local/share/composer
 RUN mkdir -p "${COMPOSER_HOME}" \
-    && export PATH="/usr/local/share/mise/installs/node/22/bin:/usr/local/share/mise/installs/php/8.4/bin:${PATH}" \
     && composer global require laravel/installer \
     && ln -sf "${COMPOSER_HOME}/vendor/bin/laravel" /usr/local/bin/laravel \
     && chmod -R a+rX "${COMPOSER_HOME}"
+
+# Binários de pacotes globais do Composer acessíveis sem depender do plugin Oh My Zsh.
+ENV PATH="${COMPOSER_HOME}/vendor/bin:${PATH}"
 
 WORKDIR /home/dev
 
